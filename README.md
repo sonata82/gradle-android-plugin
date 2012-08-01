@@ -319,3 +319,16 @@ LIMITATIONS
 * The androidManifest.xml file is not processed as a normal resource, i.e. there is
   no properties expansion (so, for example, you don't get the version set in the version tag,
   you have to align them manually).
+
+  
+CONTRIBUTING
+============
+Fork and clone project. Build using gradle:
+
+    gradle build
+  
+Change the uploadArchives task to use local repository and remove signing of pom. Then publish:
+
+    gradle uploadArchives
+
+The artifact is now available as dependency as described in USAGE.
