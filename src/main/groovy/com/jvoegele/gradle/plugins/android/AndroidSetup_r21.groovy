@@ -16,8 +16,8 @@
 
 package com.jvoegele.gradle.plugins.android
 
-class AndroidSetup_r17 extends AbstractAndroidSetup {
-  AndroidSetup_r17(project) {
+class AndroidSetup_r21 extends AbstractAndroidSetup {
+  AndroidSetup_r21(project) {
     super(project)
   }
 
@@ -28,6 +28,10 @@ class AndroidSetup_r17 extends AbstractAndroidSetup {
     def sdkDir = ant['sdk.dir']
     def toolsDir = new File(sdkDir, "tools")
     def platformToolsDir = new File(sdkDir, "platform-tools")
+
+    project.logger.info("sdkDir = ${sdkDir}");
+    project.logger.info("toolsDir = ${toolsDir}");
+    project.logger.info("platformToolsDir = ${platformToolsDir}");
 
     ant.condition('property': "exe", value: ".exe", 'else': "") { os(family: "windows") }
     ant.condition('property': "bat", value: ".bat", 'else': "") { os(family: "windows") }
@@ -47,31 +51,57 @@ class AndroidSetup_r17 extends AbstractAndroidSetup {
     // Required since SDK r17
     ant.property(name: "out.absolute.dir", value:'.')
 
-    ant.taskdef(name: 'setup', classname: 'com.android.ant.NewSetupTask', classpathref: 'android.antlibs')
+    ant.taskdef(resource: 'anttasks.properties', classpathref: 'android.antlibs')
 
     // The following properties are put in place by the setup task:
     // android.jar, android.aidl, aapt, aidl, and dx
-    ant.setup(
+    ant.gettype(
         projectTypeOut: "android.project.type",
-        androidJarFileOut: "android.jar",
-        androidAidlFileOut: "android.aidl",
-        renderScriptExeOut: "renderscript",
-        renderScriptIncludeDirOut: "android.rs",
-        bootclasspathrefOut: "android.target.classpath",
-        projectLibrariesRootOut: "project.libraries",
-        projectLibrariesJarsOut: "project.libraries.jars",
-        projectLibrariesResOut: "project.libraries.res",
-        projectLibrariesPackageOut: "project.libraries.package",
-        projectLibrariesLibsOut: "project.libraries.libs",
-        targetApiOut: "target.api")
+    );
 
-    ant.taskdef(name: "xpath", classname: "com.android.ant.XPathTask", classpathref: "android.antlibs")
-    ant.taskdef(name: "aaptexec", classname: "com.android.ant.AaptExecTask", classpathref: "android.antlibs")
-    ant.taskdef(name: "apkbuilder", classname: "com.android.ant.ApkBuilderTask", classpathref: "android.antlibs")
+    ant.gettarget(
+      androidJarFileOut: "android.jar",
+      androidAidlFileOut: "android.aidl",
+      bootClassPathOut: "android.target.classpath",
+      targetApiOut: "project.target.apilevel",
+      minSdkVersionOut: "project.minSdkVersion",
+      //renderScriptExeOut: "renderscript",
+      // renderScriptIncludeDirOut: "android.rs",
+      //bootclasspathrefOut: "android.target.classpath",
+      //projectLibrariesRootOut: "project.libraries",
+      //projectLibrariesJarsOut: "project.libraries.jars",
+      //projectLibrariesResOut: "project.libraries.res",
+      //projectLibrariesPackageOut: "project.libraries.package",
+      //projectLibrariesLibsOut: "project.libraries.libs",
+      // targetApiOut: "target.api",
+    );
+
+    ant.dependency(
+      libraryFolderPathOut: "project.library.folder.path",
+      libraryPackagesOut: "project.library.packages",
+      libraryManifestFilePathOut: "project.library.manifest.file.path",
+      libraryResFolderPathOut: "project.library.res.folder.path",
+      libraryBinAidlFolderPathOut: "project.library.bin.aidl.folder.path",
+      libraryRFilePathOut: "project.library.bin.r.file.path",
+      libraryNativeFolderPathOut: "project.library.native.folder.path",
+      jarLibraryPathOut: "project.all.jars.path",
+
+      targetApi: ant['project.target.apilevel'],
+      verbose: true
+    );
 
     ant.property(name: "aapt", location: new File(platformToolsDir, "aapt${ant['exe']}"))
     ant.property(name: "aidl", location: new File(platformToolsDir, "aidl${ant['exe']}"))
     ant.property(name: "dx", location: new File(platformToolsDir, "dx${ant['bat']}"))
+    ant.property(name: "renderscript", location: new File(platformToolsDir, "llvm-rs-cc${ant['bat']}"))
+
+    ant.property(name: "android.tools.dir", location:"${ant['sdk.dir']}/tools")
+    ant.property(name: "android.platform.tools.dir", location:"${ant['sdk.dir']}/platform-tools")
+
+    ant.path(id: "android.renderscript.include.path") {
+      pathelement(location:"${ant['android.platform.tools.dir']}/renderscript/include");
+      pathelement(location:"${ant['android.platform.tools.dir']}/renderscript/clang-include");
+	};
 
     ant.xpath(input: androidConvention.androidManifest, expression: "/manifest/@package", output: "manifest.package")
     // TODO: there can be several instrumentations defined
@@ -85,3 +115,4 @@ class AndroidSetup_r17 extends AbstractAndroidSetup {
     }
   }
 }
+
